@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Init Runner ⚙️
-        uses: UnterrainerInformatik/init-runner-action@v1
+        uses: UnterrainerInformatik/init-runner-action@master
 
       - name: Download build artifacts ⬇️
         uses: actions/download-artifact@v4
