@@ -33,7 +33,7 @@ jobs:
       - name: Init Runner ⚙️
         uses: UnterrainerInformatik/init-runner-action@master
         with:
-          self-hosted: ${{ inputs.self_hosted }}
+          self_hosted: ${{ inputs.self_hosted }}
 
       - name: Download build artifacts ⬇️
         uses: actions/download-artifact@v4
