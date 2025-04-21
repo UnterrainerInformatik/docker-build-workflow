@@ -12,6 +12,10 @@ on:
       build_version:
         required: true
         type: string
+      self_hosted:
+        required: false
+        type: boolean
+        default: false
     secrets:
       DOCKER_HUB_USER:
         required: true
@@ -28,6 +32,8 @@ jobs:
     steps:
       - name: Init Runner ⚙️
         uses: UnterrainerInformatik/init-runner-action@master
+        with:
+          self-hosted: ${{ inputs.self_hosted }}
 
       - name: Download build artifacts ⬇️
         uses: actions/download-artifact@v4
