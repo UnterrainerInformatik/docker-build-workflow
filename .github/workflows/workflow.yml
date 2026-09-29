@@ -16,6 +16,16 @@ on:
         required: false
         type: string
         default: './Dockerfile'
+      runs-on:
+        description: 'JSON array of runner labels for the build job'
+        required: false
+        type: string
+        default: '["self-hosted","Linux","X64"]'
+      builder-name:
+        description: 'Name of a persistent buildx builder reused across runs (empty = fresh builder per job)'
+        required: false
+        type: string
+        default: ''
     secrets:
       DOCKER_HUB_USER:
         required: true
@@ -27,35 +37,54 @@ on:
 jobs:
   docker-build:
     name: Build Docker Image 🐋
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ${{ fromJSON(inputs.runs-on) }}
 
     steps:
       - name: Init Runner ⚙️
         uses: UnterrainerInformatik/init-runner-action@master
 
       - name: Download build artifacts ⬇️
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: build-artifacts
           path: dist
 
       - name: Setup QEMU ⚙️
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           cache-image: false
 
       - name: Set up Docker Buildx ⚙️
-        uses: docker/setup-buildx-action@v3
+        if: ${{ inputs.builder-name == '' }}
+        uses: docker/setup-buildx-action@v4
+
+      - name: Set up persistent Docker Buildx ⚙️
+        if: ${{ inputs.builder-name != '' }}
+        uses: docker/setup-buildx-action@v4
+        with:
+          name: ${{ inputs.builder-name }}
+          keep-state: true
+          cleanup: false
+          # Applied only when the builder's node container is first created.
+          buildkitd-config-inline: |
+            [worker.oci]
+              gc = true
+              reservedSpace = "2GB"
+              maxUsedSpace = "15GB"
+              minFreeSpace = "20GB"
 
       - name: Login to DockerHub 🔑
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
       - name: Build and push 🔨
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
+        env:
+          DOCKER_BUILD_SUMMARY: false
+          DOCKER_BUILD_RECORD_UPLOAD: false
         with:
           context: ./
           file: ${{ inputs.dockerFile }}
