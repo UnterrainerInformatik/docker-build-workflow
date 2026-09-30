@@ -86,6 +86,10 @@ jobs:
           DOCKER_BUILD_SUMMARY: false
           DOCKER_BUILD_RECORD_UPLOAD: false
         with:
+          # setup-buildx-action does not make an existing builder current, and other
+          # jobs on the same runner can leave the current pointer on a removed builder.
+          # Empty = current builder (the fresh one created with --use above).
+          builder: ${{ inputs.builder-name }}
           context: ./
           file: ${{ inputs.dockerFile }}
           platforms: linux/amd64,linux/arm64/v8
